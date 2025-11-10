@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Codex Collection — Reveal</title>
+<style>
+  :root{
+    --yellow: #facc15;
+    --yellow-600: #eab308;
+    --blue: #3b82f6;
+    --blue-700: #1e40af;
+    --bg-1: #03040a;
+    --bg-2: #061228;
+    --text: #ffffff;
+    --max-blur: 64px; /* very heavy blur at start */
+    --card-radius: 12px;
+    --container-w: 1100px;
+  }
+
+  /* Reset */
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    color:var(--text);
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(circle at 12% 18%, rgba(59,130,246,0.06), transparent 10%),
+      radial-gradient(circle at 88% 86%, rgba(250,204,21,0.04), transparent 12%),
+      linear-gradient(180deg,var(--bg-1) 0%, var(--bg-2) 70%);
+    padding:20px;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  }
+
+  /* ambient soft particles (CSS-only subtle) */
+  .ambient {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .dot {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius:50%;
+    opacity: .06;
+    filter: blur(6px);
+    will-change: transform, opacity;
+    animation: float 14s linear infinite;
+  }
+  @keyframes float {
+    0% { transform: translateY(0) translateX(0) scale(1); opacity:0.06; }
+    50%{ transform: translateY(-40px) translateX(20px) scale(1.05); opacity:0.09; }
+    100%{ transform: translateY(0) translateX(0) scale(.95); opacity:0.05; }
+  }
+
+  /* stage */
+  .stage{ position:relative; z-index:2; width:100%; max-width:var(--container-w); display:flex; flex-direction:column; gap:18px; align-items:center; padding:18px; box-sizing:border-box; }
+
+  /* header */
+  .header{ text-align:center; margin-top:6px; z-index:2; }
+  .title{ font-size:clamp(1.6rem,4vw,2.6rem); font-weight:900; letter-spacing:.02em; color:var(--text); text-shadow:0 10px 30px rgba(0,0,0,0.6); }
+  .subtitle{ font-size:0.92rem; color:rgba(255,255,255,0.78); margin-top:6px; font-weight:600; }
+
+  /* reveal area */
+  .reveal-area{ width:100%; display:flex; align-items:center; justify-content:center; padding:6px 0; min-height:44vh; max-height:72vh; box-sizing:border-box; }
+  .logo-wrap{ position:relative; width:min(860px,92%); max-width:920px; display:flex; align-items:center; justify-content:center; border-radius:var(--card-radius); overflow:visible; }
+  img.codex-logo {
+    display:block; width:100%; height:auto;
+    border-radius:var(--card-radius);
+    transition: filter 900ms ease, transform 700ms ease, opacity 700ms ease;
+    filter: blur(var(--max-blur)) saturate(.85) contrast(.88);
+    transform: scale(1.02);
+    box-shadow: 0 48px 120px rgba(2,6,23,0.7);
+  }
+
+  /* clip that reveals left-to-right (clear image inside) */
+  .logo-clip {
+    position:absolute; left:0; top:0; height:100%; width:0%; overflow:hidden;
+    border-radius:var(--card-radius); transition: width 1000ms cubic-bezier(.2,.9,.2,1);
+    pointer-events:none; z-index:3;
+  }
+  .logo-clip img { width:100%; height:auto; display:block; filter: blur(0px) saturate(1.08) contrast(1.02); }
+
+  /* glow overlay for final reveal */
+  .logo-glow {
+    position:absolute; inset:-6% -6% -6% -6%; pointer-events:none; border-radius:18px;
+    box-shadow: 0 0 180px 36px rgba(250,204,21,0.06);
+    mix-blend-mode: screen; opacity:0; transition: opacity .9s ease; z-index:2;
+  }
+
+  /* info area */
+  .info{ width:100%; max-width:820px; display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:8px; z-index:2; }
+  .progress-line{ width:100%; display:flex; flex-direction:column; gap:8px; align-items:center; }
+  .progress-bar-bg{ width:86%; height:12px; background: rgba(255,255,255,0.03); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.04); }
+  .progress-bar-fill{ width:0%; height:100%; background: linear-gradient(90deg,var(--yellow-600),var(--blue)); box-shadow: 0 0 18px rgba(58,123,213,0.12); transition: width 900ms cubic-bezier(.08,.9,.2,1); border-radius:999px; }
+  .progress-percent{ color:var(--text); font-weight:900; font-size:0.95rem; margin-top:6px; letter-spacing:.03em; }
+
+  .countdown{ color:rgba(255,255,255,0.96); font-weight:800; font-size:1.02rem; margin-top:6px; text-align:center; }
+
+  /* playlist button (always visible) */
+  .cta { margin-top:6px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .play-btn{
+    display:inline-block; padding:12px 18px; border-radius:999px;
+    background: linear-gradient(135deg,var(--yellow-600),var(--blue)); color:#06243c; font-weight:900;
+    border:2px solid rgba(255,255,255,0.06); box-shadow:0 18px 48px rgba(2,6,23,0.6);
+    text-decoration:none; cursor:pointer;
+  }
+  .play-btn:active{ transform: translateY(1px); }
+
+  /* credits */
+  .credits{ margin-top:10px; color:rgba(255,255,255,0.9); font-weight:700; text-align:center; display:flex; gap:10px; flex-direction:column; }
+  .credits a{ color:var(--yellow); text-decoration:none; font-weight:900; }
+  .credits a:hover{ color:var(--blue); text-decoration:underline; }
+
+  /* watermark */
+  .watermark { position: fixed; bottom:10px; left:50%; transform:translateX(-50%); font-size:13px; color:rgba(255,255,255,0.22); z-index:14000; pointer-events:none; }
+
+  /* confetti pieces */
+  .confetti-piece{ position:fixed; z-index:99999; pointer-events:none; border-radius:3px; }
+
+  /* responsive */
+  @media (max-width:720px){
+    .countdown{ font-size:0.98rem; }
+    .logo-wrap{ width:96%; }
+    .progress-bar-bg{ width:92%; }
+    .play-btn{ width:92%; text-align:center; padding:14px; font-size:1.02rem; }
+    img.codex-logo{ filter: blur(calc(var(--max-blur) * 0.95)); }
+  }
+
+  /* respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .logo-clip, img.codex-logo, .progress-bar-fill, .logo-glow { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+  <!-- ambient soft colored dots -->
+  <div class="ambient" id="ambient"></div>
+
+  <main class="stage" role="main" aria-live="polite">
+    <header class="header">
+      <div class="title">Codex Collection</div>
+      <div class="subtitle">A cinematic reveal — Nov 17 → Nov 22</div>
+    </header>
+
+    <section class="reveal-area" aria-label="Codex logo reveal area">
+      <div class="logo-wrap" id="logoWrap">
+        <!-- blurred base -->
+        <img id="blurLogo" class="codex-logo"
+             src="https://cdn.discordapp.com/attachments/1383490758539087904/1437190455828811978/IMG-20251109-WA0061.jpg?ex=6913002a&is=6911aeaa&hm=fef8b47a9b150727d12bf9eabbe19f28487cbb158b37509be86f1110cb513c72&"
+             alt="Codex Collection Logo (blurred base)">
+        <!-- revealed inner clear image, masked by width -->
+        <div class="logo-clip" id="logoClip" aria-hidden="true">
+          <img id="clearLogo" src="https://cdn.discordapp.com/attachments/1383490758539087904/1437190455828811978/IMG-20251109-WA0061.jpg?ex=6913002a&is=6911aeaa&hm=fef8b47a9b150727d12bf9eabbe19f28487cbb158b37509be86f1110cb513c72&" alt="Codex clear logo">
+        </div>
+        <div class="logo-glow" id="logoGlow" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section class="info" role="region" aria-label="status and controls">
+      <div class="progress-line" aria-hidden="true">
+        <div class="progress-bar-bg"><div id="progressFill" class="progress-bar-fill" style="width:0%"></div></div>
+        <div id="progressPercent" class="progress-percent">0%</div>
+      </div>
+
+      <div id="countdown" class="countdown">Reveal begins Nov 17</div>
+
+      <div class="cta">
+        <a id="watchBtn" class="play-btn" href="https://youtube.com/playlist?list=PLuHsYM1bT174ZiVwEPvgpFl1poTaHjCRD" target="_blank" rel="noopener noreferrer" aria-label="Watch the playlist">▶ Watch the Playlist</a>
+      </div>
+
+      <div id="credits" class="credits" aria-hidden="false">
+        <div>Owner: <a href="https://youtube.com/@weeklyofficial_2025" target="_blank" rel="noopener noreferrer">@weeklyofficial_2025</a></div>
+        <div>In collaboration with: <a href="https://youtube.com/@binifn.x" target="_blank" rel="noopener noreferrer">@binifn.x</a></div>
+      </div>
+
+      <div class="watermark">© 2025 XX Weekly and BiniFn — All Rights Reserved</div>
+    </section>
+  </main>
+
+  <div id="confettiRoot" aria-hidden="true"></div>
+
+<script>
+/* Single-file Codex Reveal script
+   - Uses local date to progress reveal from Nov 17 -> Nov 22 inclusive
+   - Nov 17 => 0% visible, Nov 18 => 20%, ... Nov 22 => 100% visible (final)
+*/
+
+/* --- Configuration (edit if needed) --- */
+const PLAYLIST_URL = "https://youtube.com/playlist?list=PLuHsYM1bT174ZiVwEPvgpFl1poTaHjCRD";
+const START_DATE = new Date(2025, 10, 17); // Nov 17 2025 (months 0-indexed)
+const END_DATE   = new Date(2025, 10, 22); // Nov 22 2025
+const TOTAL_MS_DAY = 1000*60*60*24;
+
+/* --- Elements --- */
+const logoClip = document.getElementById('logoClip');
+const progressFill = document.getElementById('progressFill');
+const progressPercent = document.getElementById('progressPercent');
+const countdown = document.getElementById('countdown');
+const blurLogo = document.getElementById('blurLogo');
+const clearLogo = document.getElementById('clearLogo');
+const logoGlow = document.getElementById('logoGlow');
+const confettiRoot = document.getElementById('confettiRoot');
+const ambient = document.getElementById('ambient');
+
+/* --- Responsive ambient dots (small cinematic soft particles) --- */
+function makeAmbientDots(){
+  // create a handful of soft color blobs (yellow/blue)
+  const count = 12;
+  const colors = ['rgba(250,204,21,0.06)','rgba(59,130,246,0.06)','rgba(96,165,250,0.045)','rgba(250,204,21,0.04)'];
+  ambient.innerHTML = '';
+  for(let i=0;i<count;i++){
+    const d = document.createElement('div');
+    d.className = 'dot';
+    const size = 8 + Math.random()*36;
+    d.style.width = size + 'px';
+    d.style.height = (size * (0.6 + Math.random()*0.6)) + 'px';
+    d.style.left = (Math.random()*100) + '%';
+    d.style.top = (Math.random()*100) + '%';
+    d.style.background = colors[Math.floor(Math.random()*colors.length)];
+    d.style.animationDelay = (-Math.random()*14) + 's';
+    d.style.opacity = (0.03 + Math.random()*0.06).toString();
+    d.style.transform = `scale(${0.8 + Math.random()*1.2})`;
+    ambient.appendChild(d);
+  }
+}
+makeAmbientDots();
+window.addEventListener('resize', ()=> { makeAmbientDots(); }, {passive:true});
+
+/* --- Date & Reveal Math --- */
+function localMidnight(d){
+  const x = new Date(d);
+  x.setHours(0,0,0,0);
+  return x;
+}
+function computeRevealState(){
+  const now = new Date();
+  const start = localMidnight(START_DATE);
+  const end = localMidnight(END_DATE);
+  const totalDays = Math.round((end - start)/TOTAL_MS_DAY) + 1; // inclusive days
+  const passed = Math.round((localMidnight(now) - start)/TOTAL_MS_DAY); // 0 => day1 (Nov17), 1 => Nov18, ...
+  let step = passed;
+  if(passed < 0) step = -1;
+  if(passed >= totalDays) step = totalDays - 1;
+  const percent = step < 0 ? 0 : Math.round((step / (totalDays - 1)) * 100);
+  const daysRemaining = Math.max(0, Math.round((end - localMidnight(now)) / TOTAL_MS_DAY));
+  const beforeStart = passed < 0;
+  const afterEnd = passed >= totalDays;
+  return { percent, step, totalDays, daysRemaining, beforeStart, afterEnd };
+}
+
+/* --- UI update --- */
+let finalShown = false;
+function updateUI(){
+  const { percent, daysRemaining, beforeStart, afterEnd } = computeRevealState();
+
+  // progress bar & clip
+  progressFill.style.width = percent + '%';
+  progressPercent.textContent = percent + '%';
+  logoClip.style.width = percent + '%';
+
+  // blur: heavy at start -> reduce as percent grows
+  // use CSS var for max blur; fallback to 64px if not available
+  const rootStyle = getComputedStyle(document.documentElement);
+  const maxBlurRaw = parseFloat(rootStyle.getPropertyValue('--max-blur')) || 64;
+  const blurVal = Math.max(0, (maxBlurRaw * (1 - percent/100)));
+  blurLogo.style.filter = `blur(${blurVal}px) saturate(${0.82 + percent/400}) contrast(${0.86 + percent/600})`;
+  blurLogo.style.transform = `scale(${1 + Math.min(0.02, percent/1200)})`;
+
+  // glow & subtle scale on final
+  logoGlow.style.opacity = percent >= 100 ? '1' : (percent / 160).toString();
+
+  // countdown copy
+  if(beforeStart){
+    countdown.textContent = `Reveal begins Nov 17 — come back then`;
+  } else if(percent >= 100){
+    countdown.textContent = `Codex Collection — Now Unveiled`;
+    if(!finalShown) { finalReveal(); finalShown = true; }
+  } else {
+    countdown.textContent = `${daysRemaining} day${daysRemaining === 1 ? '' : 's'} until full reveal`;
+  }
+
+  // ensure percent text for a11y (aria-live)
+  progressPercent.setAttribute('aria-label', `${percent} percent revealed`);
+}
+
+/* --- Final reveal sequence (once) --- */
+function finalReveal(){
+  // pulse
+  try{
+    blurLogo.animate([
+      { transform: 'scale(1.02)' },
+      { transform: 'scale(1.08)' },
+      { transform: 'scale(1.02)' }
+    ], { duration: 1400, iterations: 2, easing: 'cubic-bezier(.2,.9,.2,1)' });
+  }catch(e){ /* ignore if WAAPI not allowed */ }
+
+  // confetti burst (yellow & blue)
+  confettiBurst(220);
+
+  // brighter glow for a while
+  logoGlow.style.transition = 'opacity 900ms ease';
+  logoGlow.style.opacity = '1';
+}
+
+/* --- Confetti function (DOM-based) --- */
+function confettiBurst(count=120){
+  const colors = ['#facc15','#eab308','#3b82f6','#1e40af','#60a5fa','#f59e0b'];
+  for(let i=0;i<count;i++){
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    const w = 6 + Math.floor(Math.random()*16);
+    const h = 8 + Math.floor(Math.random()*12);
+    el.style.width = w + 'px';
+    el.style.height = h + 'px';
+    el.style.left = (50 + (Math.random()-0.5)*70) + 'vw';
+    el.style.top = (5 + Math.random()*20) + 'vh';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.opacity = '1';
+    el.style.borderRadius = '2px';
+    el.style.transform = `translate3d(0,0,0) rotate(${Math.random()*360}deg)`;
+    confettiRoot.appendChild(el);
+
+    const dx = (Math.random()-0.5) * 300;
+    const dy = window.innerHeight * (0.4 + Math.random()*0.7);
+    const rot = (Math.random()-0.5) * 1200;
+
+    // animate then remove
+    try{
+      el.animate([
+        { transform: `translate3d(0,0,0) rotate(0deg)`, opacity: 1 },
+        { transform: `translate3d(${dx}px, ${dy}px, 0) rotate(${rot}deg)`, opacity: 0 }
+      ], { duration: 1400 + Math.random()*1600, easing: 'cubic-bezier(.2,.7,.2,1)', iterations: 1, fill: 'forwards' });
+    }catch(e){
+      // fallback: simple setTimeout removal
+      setTimeout(()=> el.remove(), 2000 + Math.random()*1600);
+    }
+    setTimeout(()=> { try{ el.remove(); }catch(_){} }, 3400);
+  }
+}
+
+/* --- Watch button behavior (already opens playlist) --- */
+const watchBtn = document.getElementById('watchBtn');
+watchBtn.addEventListener('click', (e)=> {
+  // user expects to open playlist in new tab - anchor already does it; nothing extra required.
+  // small tactile feedback: brief pulse
+  try{
+    watchBtn.animate([{ transform:'scale(1)' }, { transform:'scale(0.98)' }, { transform:'scale(1)'}], { duration: 180, easing: 'ease-out' });
+  }catch(e){}
+});
+
+/* --- Init & schedule updates --- */
+updateUI();
+setInterval(updateUI, 60 * 1000); // update each minute in case tab open across midnight
+
+/* show confetti if user lands exactly on final day and page loaded after reveal time */
+(function checkImmediateFinal(){
+  const s = computeRevealState();
+  if(s.percent >= 100 && !finalShown) { finalReveal(); finalShown = true; }
+})();
+
+/* --- Accessibility & reduced motion --- */
+const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(prefersReduced){
+  // disable animations/transitions for reduced motion
+  document.documentElement.style.setProperty('--max-blur', '0px');
+  // remove ambient movement
+  const dots = document.querySelectorAll('.dot');
+  dots.forEach(d => { d.style.animation = 'none'; d.style.opacity = '0.04'; });
+}
+
+/* --- safety: if images fail to load, show text fallback --- */
+blurLogo.addEventListener('error', ()=> {
+  blurLogo.style.display = 'none';
+  clearLogo.style.display = 'none';
+  const wrap = document.getElementById('logoWrap');
+  const fallback = document.createElement('div');
+  fallback.style.fontSize = 'clamp(2.2rem,6vw,4rem)';
+  fallback.style.fontWeight = '900';
+  fallback.style.letterSpacing = '.06em';
+  fallback.style.color = '#fff';
+  fallback.textContent = 'Codex Collection';
+  wrap.appendChild(fallback);
+});
+
+/* End script */
+</script>
+</body>
+</html>

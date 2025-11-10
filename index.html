@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Codex Collection — Reveal</title>
+<meta name="description" content="Codex Collection reveal — hourly unblur from Nov 17 to Nov 22. Owner: XX Weekly. Collab: BiniFn.">
+<style>
+  :root{
+    --yellow:#facc15;
+    --yellow-600:#eab308;
+    --blue:#3b82f6;
+    --blue-700:#1e40af;
+    --bg-dark:#061022;
+    --bg-deep:#021022;
+    --text:#ffffff;
+    --max-blur:100px; /* change to make initial blur stronger/weaker */
+    --container:1100px;
+    --radius:12px;
+    --retro-bg:#020202;
+  }
+
+  /* reset */
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Courier New", monospace;
+    color:var(--text);
+    background:
+      radial-gradient(circle at 14% 20%, rgba(59,130,246,0.06), transparent 10%),
+      radial-gradient(circle at 86% 88%, rgba(250,204,21,0.04), transparent 12%),
+      linear-gradient(180deg,var(--bg-dark) 0%, var(--bg-deep) 70%);
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:18px;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  }
+
+  /* stage */
+  .stage{ width:100%; max-width:var(--container); display:flex; flex-direction:column; gap:16px; align-items:center; padding:18px; position:relative; z-index:3; }
+
+  /* retro intro overlay */
+  .intro-overlay{
+    position:fixed; inset:0; z-index:15000; display:flex; align-items:center; justify-content:center;
+    background: linear-gradient(180deg, rgba(0,0,0,0.88), rgba(0,0,0,0.94));
+  }
+  .intro-card{
+    width:min(920px,94%); background: linear-gradient(180deg,#06070a,#0a0c11); border-radius:10px; padding:20px;
+    border:1px solid rgba(255,255,255,0.03); box-shadow:0 40px 140px rgba(0,0,0,0.7); color:#cfe9ff;
+  }
+  .retro-header{ display:flex; gap:12px; align-items:center; margin-bottom:10px; }
+  .avatar{
+    width:56px;height:56px;border-radius:8px;background:linear-gradient(180deg,var(--yellow),var(--blue));display:flex;align-items:center;justify-content:center;font-weight:900;color:#06243c;font-family:"Courier New",monospace;
+    box-shadow:0 8px 30px rgba(0,0,0,0.6);
+  }
+  .intro-title{ font-weight:900; font-size:1.15rem; color:var(--yellow-600); letter-spacing: .02em; }
+  .dialog-box{ margin-top:6px; background:linear-gradient(180deg,#05060a,#05050a); border-radius:8px; padding:12px; border:1px solid rgba(255,255,255,0.03); min-height:140px; color:#dfefff; font-family:"Courier New", monospace; font-size:0.98rem; line-height:1.6; }
+  .dialog-line{ white-space:pre-wrap; }
+  .skip-row{ display:flex; justify-content:space-between; align-items:center; margin-top:12px; gap:12px; }
+  .skip-btn{ padding:9px 14px; border-radius:8px; background:var(--blue); border:0; color:#fff; font-weight:800; cursor:pointer; box-shadow:0 10px 30px rgba(0,0,0,0.45); }
+  .small-muted{ color:rgba(255,255,255,0.55); font-weight:700; font-size:0.86rem; }
+
+  /* header */
+  .header{ text-align:center; margin-top:4px; z-index:3; }
+  .title{ font-size:clamp(1.6rem,4vw,2.4rem); font-weight:900; letter-spacing:.02em; color:var(--text); text-shadow:0 10px 30px rgba(0,0,0,0.6); }
+  .subtitle{ font-size:0.92rem; color:rgba(255,255,255,0.78); margin-top:6px; font-weight:600; }
+
+  /* reveal area */
+  .reveal-area{ width:100%; display:flex; align-items:center; justify-content:center; padding:8px 0; min-height:50vh; max-height:75vh; box-sizing:border-box; position:relative; z-index:2; }
+  .logo-wrap{ position:relative; width:min(860px,94%); max-width:920px; display:flex; align-items:center; justify-content:center; border-radius:12px; overflow:visible; }
+  .codex-logo{ width:100%; height:auto; display:block; border-radius:12px; transition: filter 600ms linear, transform 600ms ease, opacity 400ms ease; filter: blur(var(--max-blur)); box-shadow: 0 48px 120px rgba(2,6,23,0.7); background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06)); }
+
+  /* snow background (behind everything) */
+  .snow-layer {
+    position: fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden;
+    background: linear-gradient(180deg, rgba(240,248,255,0.01), rgba(10,18,30,0.05));
+    mix-blend-mode: screen;
+  }
+  .flake {
+    position: absolute; width:8px; height:8px; border-radius:2px; opacity:0.85;
+    background: radial-gradient(circle at 30% 30%, #fff, rgba(255,255,255,0.9));
+    filter: blur(1px);
+    will-change: transform, opacity;
+  }
+  @keyframes fall {
+    0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity:0.9 }
+    100% { transform: translateY(110vh) translateX(40px) rotate(360deg); opacity:0.25 }
+  }
+
+  /* info area */
+  .info{ width:100%; max-width:820px; display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:6px; z-index:3; }
+  .progress-line{ width:100%; display:flex; flex-direction:column; gap:8px; align-items:center; }
+  .progress-bar-bg{ width:86%; height:12px; background: rgba(255,255,255,0.03); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.04); }
+  .progress-bar-fill{ width:0%; height:100%; background: linear-gradient(90deg,var(--yellow-600),var(--blue)); box-shadow: 0 0 18px rgba(58,123,213,0.12); transition: width 700ms ease; border-radius:999px; }
+  .progress-percent{ color:var(--text); font-weight:900; font-size:0.95rem; margin-top:6px; letter-spacing:.03em; }
+
+  .countdown{ color:rgba(255,255,255,0.96); font-weight:800; font-size:1.02rem; margin-top:6px; text-align:center; }
+  .next-unblur{ margin-top:8px; font-size:0.98rem; color:rgba(255,255,255,0.92); font-weight:800; }
+
+  /* bottom-right menu button and panel */
+  .menu-btn { position: fixed; right:18px; bottom:18px; z-index:14000; width:56px; height:56px; border-radius:999px;
+    background: linear-gradient(135deg,var(--yellow-600),var(--blue)); border:0; box-shadow: 0 18px 48px rgba(0,0,0,0.45);
+    display:flex; align-items:center; justify-content:center; font-weight:900; color:#06243c; cursor:pointer;
+  }
+  .menu-panel {
+    position: fixed; right:18px; bottom:86px; z-index:14000; width:280px; max-width:92vw; background: linear-gradient(180deg,#071427,#041022);
+    border-radius:12px; padding:10px; box-shadow:0 30px 80px rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.03); display:none; flex-direction:column; gap:8px;
+  }
+  .menu-link{ display:block; padding:10px 12px; background:rgba(255,255,255,0.02); border-radius:10px; color:var(--text); font-weight:800; text-decoration:none; border:1px solid rgba(255,255,255,0.02); text-align:left; }
+  .menu-link:hover{ transform: translateY(-3px); transition: transform .12s ease; }
+
+  /* credits modal */
+  .credits-modal { position: fixed; inset:0; display:none; z-index:15000; align-items:center; justify-content:center; background: rgba(0,0,0,0.74); }
+  .credits-card{ width:min(520px,92%); background: linear-gradient(180deg,#061225,#041021); padding:18px; border-radius:10px; border:1px solid rgba(255,255,255,0.03); box-shadow:0 30px 80px rgba(0,0,0,0.6); color:var(--text); font-weight:700; text-align:center; }
+  .credits-card a{ color:var(--yellow); text-decoration:none; font-weight:900; }
+  .credits-close{ margin-top:12px; padding:8px 12px; border-radius:8px; background:var(--blue); color:#fff; font-weight:900; border:0; cursor:pointer; }
+
+  /* final banner */
+  .final-banner{ margin-top:12px; font-weight:900; color:var(--yellow); text-shadow:0 6px 30px rgba(30,64,175,0.12); display:none; }
+
+  /* watermark */
+  .watermark { position: fixed; bottom:10px; left:50%; transform:translateX(-50%); font-size:13px; color:rgba(255,255,255,0.18); z-index:14000; pointer-events:none; }
+
+  /* confetti pieces */
+  .confetti-piece{ position:fixed; z-index:99999; pointer-events:none; border-radius:3px; }
+
+  /* responsive */
+  @media (max-width:720px){
+    .menu-panel{ right:12px; bottom:76px; width:86vw; }
+    .logo-wrap{ width:96%; }
+    .progress-bar-bg{ width:92%; }
+  }
+
+  /* reduced motion */
+  @media (prefers-reduced-motion: reduce){
+    .codex-logo { transition: none !important; }
+    .flake { animation: none !important; opacity:0.6; }
+  }
+</style>
+</head>
+<body>
+  <!-- snow layer -->
+  <div class="snow-layer" id="snowLayer" aria-hidden="true"></div>
+
+  <!-- intro overlay (retro) -->
+  <div class="intro-overlay" id="introOverlay" role="dialog" aria-modal="true">
+    <div class="intro-card" role="document" aria-label="Codex intro">
+      <div class="retro-header" aria-hidden="true">
+        <div class="avatar" title="XX Weekly (owner)">XW</div>
+        <div>
+          <div class="intro-title">Codex Collection — Prelude</div>
+          <div style="font-size:0.85rem;color:rgba(255,255,255,0.6);">Booting reveal sequence...</div>
+        </div>
+      </div>
+
+      <div class="dialog-box" id="dialogBox" aria-live="polite">
+        <div id="dialogText" class="dialog-line"></div>
+      </div>
+
+      <div class="skip-row">
+        <div class="small-muted">Owner: XX Weekly — Collaborator: BiniFn</div>
+        <div style="display:flex;gap:8px">
+          <button id="skipIntro" class="skip-btn" aria-label="Skip intro">Skip Intro</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- main stage -->
+  <main class="stage" role="main" aria-live="polite" aria-atomic="true">
+    <header class="header" role="banner">
+      <div class="title">Codex Collection</div>
+      <div class="subtitle">Hourly unblur — Nov 17 → Nov 22 — LEGO Fortnite Series</div>
+    </header>
+
+    <section class="reveal-area" role="region" aria-label="Logo reveal">
+      <div class="logo-wrap" id="logoWrap">
+        <img id="codexLogo" class="codex-logo" alt="Codex Collection logo (blurred)">
+      </div>
+    </section>
+
+    <section class="info" role="region" aria-label="status and controls">
+      <div class="progress-line" aria-hidden="true">
+        <div class="progress-bar-bg" aria-hidden="true"><div id="progressFill" class="progress-bar-fill" style="width:0%"></div></div>
+        <div id="progressPercent" class="progress-percent">0%</div>
+      </div>
+
+      <div id="countdown" class="countdown">Reveal begins Nov 17</div>
+      <div id="nextUnblur" class="next-unblur">Next clarity update in: --:--:--</div>
+
+      <div style="height:10px"></div>
+
+      <div class="cta" style="margin-top:6px;">
+        <div style="color:rgba(255,255,255,0.85);font-weight:800;font-size:0.92rem">Open Menu ↓</div>
+      </div>
+
+      <div id="finalBanner" class="final-banner">Codex Collection — Now Unveiled</div>
+    </section>
+  </main>
+
+  <!-- menu button + panel -->
+  <button id="menuBtn" class="menu-btn" aria-haspopup="true" aria-expanded="false" aria-label="Open menu">☰</button>
+  <div id="menuPanel" class="menu-panel" role="menu" aria-hidden="true">
+    <a class="menu-link" id="menuWatch" href="https://youtube.com/playlist?list=PLuHsYM1bT174ZiVwEPvgpFl1poTaHjCRD" target="_blank" rel="noopener noreferrer">▶ Watch Playlist</a>
+    <a class="menu-link" id="menuSeason" href="https://youtube.com/playlist?list=PLMHItU_I4Deoshyoz8DZYwksaUW8Q4uDV" target="_blank" rel="noopener noreferrer">🎬 Check Season 1</a>
+    <a class="menu-link" id="menuOwner" href="https://youtube.com/@weeklyofficial_2025" target="_blank" rel="noopener noreferrer">👑 Owner: XX Weekly</a>
+    <a class="menu-link" id="menuCollab" href="https://youtube.com/@binifn.x" target="_blank" rel="noopener noreferrer">🤝 Collab: BiniFn</a>
+    <button id="menuClose" class="menu-link" aria-label="Close menu">Close</button>
+  </div>
+
+  <!-- credits modal -->
+  <div id="creditsModal" class="credits-modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="credits-card" role="document">
+      <div style="font-size:1.05rem;font-weight:900;margin-bottom:6px">Credits</div>
+      <div style="margin-top:6px">Owner: <a href="https://youtube.com/@weeklyofficial_2025" target="_blank" rel="noopener noreferrer">@weeklyofficial_2025</a></div>
+      <div style="margin-top:6px">Collaborator: <a href="https://youtube.com/@binifn.x" target="_blank" rel="noopener noreferrer">@binifn.x</a></div>
+      <div style="margin-top:10px;color:rgba(255,255,255,0.8)">Thanks to the community — stay tuned for the full Codex reveal.</div>
+      <button id="closeCredits" class="credits-close" aria-label="Close credits">Close</button>
+    </div>
+  </div>
+
+  <div class="watermark">© 2025 XX Weekly and BiniFn — All Rights Reserved</div>
+
+  <div id="confettiRoot" aria-hidden="true"></div>
+
+<script>
+/*
+  Single-file Codex Reveal — Final build
+  - Retro intro with typewriter dialog (slower)
+  - Hourly unblur from Nov 17 00:00 local -> Nov 22 00:00 local (inclusive end)
+  - Next unblur timer HH:MM:SS til next hour
+  - Menu with links (no duplicate credits)
+  - Snow background + subtle particles
+  - Intro is skippable and remembered in localStorage
+  - Uses user logo URL (set LOGO_SRC below)
+*/
+
+/* ---------- CONFIG ---------- */
+const LOGO_SRC = "https://cdn.discordapp.com/attachments/1383490758539087904/1437190455828811978/IMG-20251109-WA0061.jpg?ex=6913002a&is=6911aeaa&hm=fef8b47a9b150727d12bf9eabbe19f28487cbb158b37509be86f1110cb513c72&";
+const START = new Date(2025, 10, 17, 0, 0, 0); // Nov 17 local midnight
+const END =   new Date(2025, 10, 22, 0, 0, 0); // Nov 22 local midnight (end)
+const MAX_BLUR = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--max-blur')) || 100;
+
+/* ---------- DOM ---------- */
+const introOverlay = document.getElementById('introOverlay');
+const dialogText = document.getElementById('dialogText');
+const skipIntro = document.getElementById('skipIntro');
+
+const codexLogo = document.getElementById('codexLogo');
+const progressFill = document.getElementById('progressFill');
+const progressPercent = document.getElementById('progressPercent');
+const countdown = document.getElementById('countdown');
+const nextUnblur = document.getElementById('nextUnblur');
+const finalBanner = document.getElementById('finalBanner');
+
+const menuBtn = document.getElementById('menuBtn');
+const menuPanel = document.getElementById('menuPanel');
+const menuClose = document.getElementById('menuClose');
+
+const creditsModal = document.getElementById('creditsModal');
+const closeCredits = document.getElementById('closeCredits');
+
+const confettiRoot = document.getElementById('confettiRoot');
+const snowLayer = document.getElementById('snowLayer');
+
+/* ---------- Intro dialogue (slower, quality of life) ---------- */
+const introLines = [
+  {who:'BiniFn', color:'#facc15', text:"Yo! It's Bini here — big news incoming."},
+  {who:'BiniFn', color:'#facc15', text:"I've teamed up with XX Weekly for a LEGO Fortnite series."},
+  {who:'XX Weekly', color:'#3b82f6', text:"That's right. The Codex Collection will reveal its logo over time."},
+  {who:'XX Weekly', color:'#3b82f6', text:"It starts November 17 and slowly gets clearer every hour."},
+  {who:'BiniFn', color:'#facc15', text:"By November 22 it will be fully revealed. Watch the progress and the timer."},
+  {who:'XX Weekly', color:'#3b82f6', text:"Check the playlist, tune in, and enjoy the build-up."},
+];
+
+const INTRO_STORAGE_KEY = 'codex_intro_seen_v1';
+
+/* typewriter util */
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+async function typeLine(textEl, line, charDelay=28){
+  textEl.textContent = '';
+  const prefix = line.who + ": ";
+  const full = prefix + line.text;
+  // slower typing and slight pause after prefix
+  for(let i=0;i<full.length;i++){
+    textEl.textContent += full[i];
+    // micro-variation to feel natural
+    await sleep(charDelay + Math.floor(Math.random()*10));
+  }
+}
+
+let introCancelled = false;
+async function playIntro(){
+  // if already seen, hide immediately
+  try {
+    const seen = localStorage.getItem(INTRO_STORAGE_KEY);
+    if(seen === '1') {
+      introOverlay.style.display = 'none';
+      introOverlay.setAttribute('aria-hidden','true');
+      return;
+    }
+  } catch(e){ /* ignore storage errors */ }
+
+  introOverlay.style.display = 'flex';
+  introOverlay.setAttribute('aria-hidden','false');
+  dialogText.textContent = '';
+  for(const ln of introLines){
+    if(introCancelled) break;
+    await typeLine(dialogText, ln, 34); // slower
+    await sleep(700);
+    // small newline / breathing
+    // add an ellipsis wait to simulate dialog pacing
+  }
+  // after playing, remember
+  try { localStorage.setItem(INTRO_STORAGE_KEY, '1'); } catch(e){}
+  await sleep(500);
+  hideIntro();
+}
+
+function hideIntro(){
+  introCancelled = true;
+  introOverlay.style.display = 'none';
+  introOverlay.setAttribute('aria-hidden','true');
+  // ensure UI updates begin
+  initReveal(); // start UI and timers
+}
+
+/* skip button */
+skipIntro.addEventListener('click', ()=> {
+  try { localStorage.setItem(INTRO_STORAGE_KEY, '1'); } catch(e){}
+  introCancelled = true;
+  hideIntro();
+});
+
+/* ---------- Snowflakes (simple lightweight) ---------- */
+function makeFlakes(count=28){
+  snowLayer.innerHTML = '';
+  const colors = ['rgba(255,255,255,0.92)','rgba(240,248,255,0.96)','rgba(220,235,255,0.9)'];
+  for(let i=0;i<count;i++){
+    const el = document.createElement('div');
+    el.className = 'flake';
+    const size = 6 + Math.random()*18;
+    el.style.width = size + 'px';
+    el.style.height = size + 'px';
+    el.style.left = (Math.random()*100) + 'vw';
+    el.style.top = (-10 - Math.random()*20) + 'vh';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.opacity = (0.35 + Math.random()*0.7).toString();
+    const delay = Math.random()*6;
+    const dur = 6 + Math.random()*12;
+    el.style.animation = `fall ${dur}s linear ${delay}s infinite`;
+    el.style.transform = `translateX(${(Math.random()-0.5)*40}px)`;
+    snowLayer.appendChild(el);
+  }
+}
+makeFlakes(28);
+
+/* ---------- Reveal math (hourly steps) ---------- */
+/* compute total hours inclusive from START (midnight) to END (midnight)
+   Example: Nov17 00:00 -> Nov22 00:00 => 120 hours (5 days * 24)
+*/
+function floorToLocalHour(d){
+  const t = new Date(d);
+  t.setMinutes(0,0,0);
+  return t;
+}
+
+function computeRevealState(){
+  const now = new Date();
+  const start = new Date(START.getFullYear(), START.getMonth(), START.getDate(), 0,0,0);
+  const end = new Date(END.getFullYear(), END.getMonth(), END.getDate(), 0,0,0);
+  const totalHours = Math.round((end - start) / (1000*60*60)); // e.g., 120
+  const hoursPassed = Math.floor((now - start) / (1000*60*60)); // can be negative
+  const clamped = Math.max(-1, Math.min(hoursPassed, totalHours)); // -1 before start, total at/after end
+  const step = clamped; // -1...totalHours
+  const percent = step < 0 ? 0 : Math.round((step / Math.max(1, totalHours)) * 100);
+  const beforeStart = hoursPassed < 0;
+  const afterEnd = hoursPassed >= totalHours;
+  const hoursRemainingToEnd = Math.max(0, totalHours - Math.max(0, hoursPassed));
+  return { now, start, end, totalHours, hoursPassed, step, percent, beforeStart, afterEnd, hoursRemainingToEnd };
+}
+
+/* time to next hour (seconds) */
+function secondsToNextHour(){
+  const now = new Date();
+  const next = new Date(now);
+  next.setMinutes(0,0,0);
+  next.setHours(next.getHours()+1);
+  return Math.max(0, Math.floor((next - now)/1000));
+}
+function formatCountdown(sec){
+  const h = Math.floor(sec/3600); const m = Math.floor((sec%3600)/60); const s = sec%60;
+  const pad = n => String(n).padStart(2,'0');
+  if(h > 0) return `${h}h ${pad(m)}m ${pad(s)}s`;
+  return `${m}m ${pad(s)}s`;
+}
+
+/* ---------- UI update ---------- */
+let uiInterval = null;
+let secInterval = null;
+let finalTriggered = false;
+
+function updateUI(){
+  const st = computeRevealState();
+  const percent = st.percent;
+  // progress visuals
+  progressFill.style.width = percent + '%';
+  progressPercent.textContent = percent + '%';
+  // blur mapping
+  const blurPx = Math.max(0, MAX_BLUR * (1 - (percent/100)));
+  codexLogo.style.filter = `blur(${blurPx}px) saturate(${0.92 + percent/400}) contrast(${0.9 + percent/600})`;
+  codexLogo.style.transform = `scale(${1 + Math.min(0.02, percent/1500)})`;
+  // countdown text
+  if(st.beforeStart){
+    countdown.textContent = `Reveal begins Nov 17 — prepare`;
+  } else if(st.afterEnd){
+    countdown.textContent = `Reveal complete — Nov 22`;
+  } else {
+    // show days remaining approx
+    const daysLeft = Math.ceil(st.hoursRemainingToEnd / 24);
+    countdown.textContent = `${daysLeft} day${daysLeft===1?'':'s'} until final reveal`;
+  }
+  // next unblur
+  const sec = secondsToNextHour();
+  nextUnblur.textContent = `Next clarity update in: ${formatCountdown(sec)}`;
+
+  // final reveal
+  if(percent >= 100 && !finalTriggered){
+    finalTriggered = true;
+    triggerFinal();
+  }
+}
+
+/* start timers */
+function startTimers(){
+  // initial UI update
+  updateUI();
+  // update percent every minute (safe)
+  uiInterval = setInterval(updateUI, 60*1000);
+  // update seconds and check hourly boundaries each second
+  secInterval = setInterval(()=> {
+    const sec = secondsToNextHour();
+    nextUnblur.textContent = `Next clarity update in: ${formatCountdown(sec)}`;
+    if(sec === 0){ updateUI(); } // refresh percent at the hour
+  }, 1000);
+}
+
+/* ---------- Final reveal: glow + confetti ---------- */
+function triggerFinal(){
+  finalBanner.style.display = 'block';
+  // glow pulse
+  try {
+    codexLogo.animate([
+      { transform: 'scale(1.00)' },
+      { transform: 'scale(1.06)' },
+      { transform: 'scale(1.00)' }
+    ], { duration: 1600, iterations: 2, easing: 'cubic-bezier(.2,.9,.2,1)' });
+  } catch(e){}
+  // confetti burst
+  confettiBurst(180);
+}
+
+/* confetti (DOM) */
+function confettiBurst(count=120){
+  const colors = ['#facc15','#eab308','#3b82f6','#1e40af','#60a5fa','#f59e0b'];
+  for(let i=0;i<count;i++){
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    const w = 6 + Math.floor(Math.random()*18);
+    const h = 8 + Math.floor(Math.random()*10);
+    el.style.width = w + 'px'; el.style.height = h + 'px';
+    el.style.left = (50 + (Math.random()-0.5)*70) + 'vw';
+    el.style.top = (5 + Math.random()*20) + 'vh';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.opacity = '1';
+    el.style.borderRadius = '2px';
+    el.style.transform = `translate3d(0,0,0) rotate(${Math.random()*360}deg)`;
+    confettiRoot.appendChild(el);
+    const dx = (Math.random()-0.5) * 360;
+    const dy = window.innerHeight * (0.45 + Math.random()*0.6);
+    const rot = (Math.random()-0.5) * 1200;
+    try {
+      el.animate([
+        { transform: `translate3d(0,0,0) rotate(0deg)`, opacity: 1 },
+        { transform: `translate3d(${dx}px, ${dy}px, 0) rotate(${rot}deg)`, opacity: 0 }
+      ], {
+        duration: 1400 + Math.random()*1200,
+        easing: 'cubic-bezier(.2,.7,.2,1)',
+        iterations: 1,
+        fill: 'forwards'
+      });
+    } catch(e){
+      setTimeout(()=> el.remove(), 1800 + Math.random()*1200);
+    }
+    setTimeout(()=> { try{ el.remove(); }catch(_){} }, 3600);
+  }
+}
+
+/* ---------- Menu interactions ---------- */
+menuBtn.addEventListener('click', ()=>{
+  const open = menuPanel.style.display === 'flex';
+  if(open){
+    menuPanel.style.display = 'none';
+    menuBtn.setAttribute('aria-expanded','false');
+  } else {
+    menuPanel.style.display = 'flex';
+    menuPanel.style.flexDirection = 'column';
+    menuBtn.setAttribute('aria-expanded','true');
+  }
+});
+menuClose.addEventListener('click', ()=> { menuPanel.style.display = 'none'; menuBtn.setAttribute('aria-expanded','false'); });
+
+/* credits modal close */
+document.getElementById('menuOwner').addEventListener('click', ()=> { menuPanel.style.display = 'none'; });
+document.getElementById('menuCollab').addEventListener('click', ()=> { menuPanel.style.display = 'none'; });
+
+menuPanel.querySelectorAll('a').forEach(a=>{
+  a.addEventListener('click', ()=> { menuPanel.style.display = 'none'; menuBtn.setAttribute('aria-expanded','false'); });
+});
+
+/* ---------- Init / start ---------- */
+function initReveal(){
+  // set logo src
+  codexLogo.src = LOGO_SRC;
+  codexLogo.alt = "Codex Collection logo (revealing)";
+  // initial UI and timers
+  updateUI();
+  startTimers();
+}
+
+/* play intro then init */
+window.addEventListener('load', async ()=>{
+  // reduced motion: skip intro
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduced){
+    introOverlay.style.display = 'none';
+    introOverlay.setAttribute('aria-hidden','true');
+    try { localStorage.setItem(INTRO_STORAGE_KEY, '1'); } catch(e){}
+    initReveal();
+    return;
+  }
+  // play intro (async)
+  try {
+    // small delay then play
+    await sleep(300);
+    playIntro();
+  } catch(e){
+    introOverlay.style.display = 'none';
+    introOverlay.setAttribute('aria-hidden','true');
+    initReveal();
+  }
+});
+
+/* accessibility & escape keys */
+window.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){
+    if(menuPanel.style.display === 'flex'){ menuPanel.style.display = 'none'; menuBtn.setAttribute('aria-expanded','false'); }
+    if(creditsModal.style.display === 'flex'){ creditsModal.style.display = 'none'; creditsModal.setAttribute('aria-hidden','true'); }
+    if(introOverlay.style.display === 'flex'){ introCancelled = true; hideIntro(); }
+  }
+});
+
+/* cleanup */
+window.addEventListener('beforeunload', ()=>{
+  if(uiInterval) clearInterval(uiInterval);
+  if(secInterval) clearInterval(secInterval);
+});
+
+/* fallback if logo fails to load */
+codexLogo.addEventListener('error', ()=>{
+  codexLogo.style.display = 'none';
+  const wrap = document.getElementById('logoWrap');
+  const fallback = document.createElement('div');
+  fallback.textContent = 'Codex Collection';
+  fallback.style.fontWeight = '900';
+  fallback.style.fontSize = 'clamp(2rem,6vw,4rem)';
+  fallback.style.letterSpacing = '.06em';
+  fallback.style.color = '#fff';
+  wrap.appendChild(fallback);
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>CODΞX — Season 2 Prelude</title>
+<style>
+:root {
+  --gold: #ffd700;
+  --bg1: #02111b;
+  --bg2: #001d2f;
+  --accent: #00baff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  background: linear-gradient(180deg, var(--bg1), var(--bg2));
+  color: #eaf6ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-x: hidden;
+}
+
+.stage { text-align: center; width: 100%; max-width: 920px; }
+#dialogue {
+  margin: 8px auto 18px;
+  min-height: 72px;
+  max-width: 92%;
+  background: rgba(0,0,0,0.4);
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+  font-weight: 700;
+  line-height: 1.5;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+  font-size: 1.05rem;
+}
+
+#codex {
+  width: 60%;
+  max-width: 700px;
+  min-width: 200px;
+  border-radius: 14px;
+  filter: blur(20px);
+  transition: filter 1s linear, transform 0.5s ease;
+  box-shadow: 0 40px 120px rgba(0,0,0,0.6);
+}
+
+@media (max-width: 480px) {
+  #codex { width: 85%; filter: blur(22px); }
+  #dialogue { font-size: 1rem; padding: 10px 12px; }
+}
+
+/* Buttons */
+.button {
+  display: inline-block;
+  margin: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(255,215,0,0.1);
+  color: var(--gold);
+  border: 1px solid rgba(255,215,0,0.15);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  transition: background .3s, transform .2s;
+}
+.button:hover { background: rgba(255,215,0,0.18); transform: scale(1.05); }
+
+/* Progress Bar */
+#progressWrap {
+  width: 90%;
+  max-width: 420px;
+  height: 10px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 6px;
+  margin: 20px auto 8px;
+  overflow: hidden;
+}
+#progressBar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--gold), var(--accent));
+  transition: width 0.8s ease;
+}
+#percent {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.7);
+}
+
+/* Popup modal */
+#popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  text-align: left;
+  padding: 20px;
+  z-index: 99;
+}
+#popupContent {
+  background: #031c28;
+  border-radius: 12px;
+  max-width: 600px;
+  padding: 20px 26px;
+  box-shadow: 0 0 60px rgba(0,0,0,0.6);
+}
+#popup h2 { color: var(--gold); margin-bottom: 10px; }
+#popup p { font-size: 0.95rem; line-height: 1.6; margin-bottom: 6px; }
+#closePopup {
+  margin-top: 12px;
+  background: rgba(0,186,255,0.2);
+  color: var(--accent);
+  border-color: rgba(0,186,255,0.4);
+}
+</style>
+</head>
+
+<body>
+  <main class="stage">
+    <div id="dialogue">[static crackle] Initializing...</div>
+    <img id="codex" src="assets/images/codex-blurred.jpg" alt="Codex Logo">
+    <div id="progressWrap"><div id="progressBar"></div></div>
+    <div id="percent">0%</div>
+
+    <div>
+      <button id="skipBtn" class="button">⏭ Skip Dialogue</button>
+      <button id="moreBtn" class="button">📖 Codex Lore</button>
+      <a href="https://youtube.com/playlist?list=PLuHsYM1bT174ZiVwEPvgpFl1poTaHjCRD"
+         target="_blank" class="button">▶ Watch Season 1</a>
+      <a href="https://youtube.com/@weeklyofficial_2025"
+         target="_blank" class="button">🌀 XX Weekly</a>
+      <a href="https://youtube.com/@binifn.x"
+         target="_blank" class="button">🔥 BiniFn</a>
+    </div>
+  </main>
+
+  <audio id="bg" src="assets/audio/hero-ending.mp3" loop preload="auto"></audio>
+
+  <!-- Popup -->
+  <div id="popup">
+    <div id="popupContent">
+      <h2>📘 Codex: The LEGO Fortnite Chronicles</h2>
+      <p><strong>Season 1 Recap:</strong> After the Storm King shattered the LEGO Hub,
+      fragments of the Codex scattered across biomes — frozen peaks, brick deserts,
+      and the shadowed dungeons beneath the Spire. 🌀</p>
+      <p>Adventurers forged alliances to rebuild the Codex — but its energy
+      fused with Storm Essence, creating something neither side could control.</p>
+      <p><strong>Now:</strong> In Season 2, the Codex begins to reassemble itself,
+      layer by layer. As the blur fades, so does the boundary between worlds.
+      The storm returns... but this time, it answers to no one. ⚡</p>
+      <p>Every reveal day brings new fragments online. Check back until November 22
+      to witness the full awakening of the Codex.</p>
+      <button id="closePopup" class="button">Close</button>
+    </div>
+  </div>
+
+<script>
+const dialogue = [
+  "BiniFn: Whoa — we’re back online! ⚡",
+  "XX Weekly: You didn’t think Season 1 was the end, did you? 😏",
+  "BiniFn: After that explosion in the LEGO Fortnite hub?? 💥",
+  "XX Weekly: The Codex wasn’t destroyed — it evolved.",
+  "BiniFn: So this is Season 2? 👀",
+  "XX Weekly: Not exactly. This is the bridge between worlds.",
+  "BiniFn: The Codex logo… it’s re-forming?! 🌀",
+  "XX Weekly: Layer by layer, until November 22. Patience builds power. 💫",
+  "BiniFn: (grins) So the cliffhanger finally pays off.",
+  "XX Weekly: Indeed. The storm returns — and this time, it listens to the Codex. 🌩",
+  "BiniFn: Let’s make history, agents. System reboot in 3…2…1… 🚀"
+];
+
+const dlg = document.getElementById('dialogue');
+const codex = document.getElementById('codex');
+const progressBar = document.getElementById('progressBar');
+const percent = document.getElementById('percent');
+const bg = document.getElementById('bg');
+let idx = 0, timer = null, revealTimer = null;
+
+/* ---- Audio ---- */
+async function playMusic(){
+  try { await bg.play(); }
+  catch(e){
+    document.body.addEventListener('click', ()=>bg.play(), {once:true});
+  }
+}
+
+/* ---- Dialogue ---- */
+function nextLine(){
+  if(idx >= dialogue.length){ startReveal(); return; }
+  dlg.textContent = dialogue[idx++];
+  timer = setTimeout(nextLine, 2800);
+}
+
+function startDialogue(){
+  dlg.textContent = dialogue[idx];
+  timer = setTimeout(nextLine, 2500);
+  playMusic();
+}
+
+/* ---- Skip ---- */
+document.getElementById('skipBtn').onclick = ()=>{
+  clearTimeout(timer);
+  dlg.textContent = "Dialogue skipped. ⚙️ Beginning reveal...";
+  startReveal();
+};
+
+/* ---- Reveal logic ---- */
+const START = new Date(2025,10,17,0,0,0);
+const END = new Date(2025,10,22,0,0,0);
+const MAX_BLUR = 20;
+
+function getProgress(){
+  const now = new Date();
+  if(now <= START) return 0;
+  if(now >= END) return 100;
+  const total = END - START;
+  return Math.floor(((now - START) / total) * 100);
+}
+function updateProgress(){
+  const pct = getProgress();
+  progressBar.style.width = pct + "%";
+  percent.textContent = pct + "%";
+  const blur = MAX_BLUR * (1 - pct/100);
+  codex.style.filter = `blur(${blur.toFixed(1)}px)`;
+  if(pct >= 100){
+    dlg.textContent = "Codex fully revealed — The Tempest awakens. ⚡";
+    clearInterval(revealTimer);
+    codex.style.transform = "scale(1.02)";
+    setTimeout(()=> codex.style.transform = "scale(1)", 1000);
+  }
+}
+function startReveal(){
+  clearInterval(revealTimer);
+  updateProgress();
+  revealTimer = setInterval(updateProgress, 60*1000);
+}
+
+/* ---- Popup ---- */
+const popup = document.getElementById('popup');
+document.getElementById('moreBtn').onclick = ()=> popup.style.display = 'flex';
+document.getElementById('closePopup').onclick = ()=> popup.style.display = 'none';
+
+/* ---- Init ---- */
+window.onload = ()=> setTimeout(startDialogue, 1500);
+</script>
+</body>
+</html>
